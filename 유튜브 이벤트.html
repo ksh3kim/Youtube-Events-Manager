@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유튜브 이벤트 관리</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f5f5f5;
+            color: #212121;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .controls {
+            background: white;
+            padding: 16px 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        select {
+            padding: 10px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        select:hover {
+            border-color: #667eea;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0 24px;
+            background: white;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 16px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+            font-weight: 500;
+            color: #757575;
+        }
+
+        .tab:hover {
+            background: #f5f5f5;
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .cards-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-4px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #212121;
+            margin-bottom: 4px;
+        }
+
+        .card-channel {
+            font-size: 14px;
+            color: #757575;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            transition: all 0.3s;
+            color: #757575;
+        }
+
+        .icon-btn:hover {
+            background: #f5f5f5;
+            color: #667eea;
+        }
+
+        .card-info {
+            margin: 12px 0;
+            font-size: 14px;
+            color: #616161;
+            line-height: 1.6;
+        }
+
+        .card-info div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 12px;
+        }
+
+        .chip.progress {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .chip.ended {
+            background: #f5f5f5;
+            color: #757575;
+        }
+
+        .chip.winner {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 50;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #424242;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #616161;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9e9e9e;
+        }
+
+        .empty-state .material-icons {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 20px;
+            color: #9e9e9e;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                padding: 0 16px;
+            }
+
+            .tab {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .controls {
+                padding: 12px 16px;
+            }
+
+            .container {
+                padding: 16px;
+            }
+        }
+
+        @media (min-width: 601px) and (max-width: 960px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .link-btn {
+            color: #667eea;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .link-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>
+            <span class="material-icons">event_note</span>
+            유튜브 이벤트 관리
+        </h1>
+    </div>
+
+    <div class="controls">
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="채널명, 이벤트, 경품 검색...">
+            <div class="filter-group">
+                <select id="channelFilter">
+                    <option value="">전체 채널</option>
+                </select>
+                <select id="monthFilter">
+                    <option value="">전체 월</option>
+                </select>
+                <select id="platformFilter">
+                    <option value="">전체 플랫폼</option>
+                </select>
+                <select id="sortBy">
+                    <option value="applyDate-desc">신청일 최신순</option>
+                    <option value="applyDate-asc">신청일 과거순</option>
+                    <option value="announceDate-asc">발표일 가까운순</option>
+                    <option value="announceDate-desc">발표일 먼순</option>
+                    <option value="channelName-asc">채널명순</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="all">전체</div>
+        <div class="tab" data-tab="progress">진행중</div>
+        <div class="tab" data-tab="ended">종료</div>
+        <div class="tab" data-tab="winner">당첨</div>
+    </div>
+
+    <div class="container">
+        <div class="cards-grid" id="cardsContainer"></div>
+        <div class="loading-indicator" id="loadingIndicator" style="display: none;">
+            <span class="material-icons">refresh</span>
+            <p>로딩 중...</p>
+        </div>
+    </div>
+
+    <button class="fab" id="addBtn">
+        <span class="material-icons">add</span>
+    </button>
+
+    <div class="modal" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">이벤트 추가</h2>
+                <button class="icon-btn" onclick="closeModal()">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <form id="eventForm">
+                <div class="form-group">
+                    <label>채널명 *</label>
+                    <input type="text" id="channelName" required>
+                </div>
+                <div class="form-group">
+                    <label>이벤트 제목 *</label>
+                    <input type="text" id="eventTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>신청 날짜 *</label>
+                    <input type="date" id="applyDate" required>
+                </div>
+                <div class="form-group">
+                    <label>발표 날짜 *</label>
+                    <input type="date" id="announceDate" required>
+                </div>
+                <div class="form-group">
+                    <label>경품 정보</label>
+                    <input type="text" id="prize" placeholder="예: 에어팟 프로">
+                </div>
+                <div class="form-group">
+                    <label>발표 플랫폼</label>
+                    <input type="text" id="platform" placeholder="예: 유튜브 커뮤니티">
+                </div>
+                <div class="form-group">
+                    <label>이벤트 링크</label>
+                    <input type="url" id="eventLink" placeholder="https://">
+                </div>
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="isWinner">
+                        <label for="isWinner">당첨됨</label>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">취소</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let db;
+        let currentTab = 'all';
+        let editingId = null;
+        let allEvents = [];
+        let displayedEvents = [];
+        let displayCount = 20;
+        let observer;
+
+        // IndexedDB 초기화
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('YouTubeEventDB', 1);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (e) => {
+                    db = e.target.result;
+                    if (!db.objectStoreNames.contains('events')) {
+                        db.createObjectStore('events', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        // CRUD 함수들
+        async function addEvent(event) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['events'], 'readwrite');
+                const store = transaction.objectStore('events');
+                const request = store.add(event);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function updateEvent(event) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['events'], 'readwrite');
+                const store = transaction.objectStore('events');
+                const request = store.put(event);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function deleteEvent(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['events'], 'readwrite');
+                const store = transaction.objectStore('events');
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getAllEvents() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['events'], 'readonly');
+                const store = transaction.objectStore('events');
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // 상태 자동 계산
+        function calculateStatus(event) {
+            if (event.isWinner) return 'winner';
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const announceDate = new Date(event.announceDate);
+            announceDate.setHours(0, 0, 0, 0);
+            
+            if (today <= announceDate) return 'progress';
+            return 'ended';
+        }
+
+        // 모든 이벤트 상태 업데이트
+        async function updateAllStatuses() {
+            const events = await getAllEvents();
+            for (let event of events) {
+                const newStatus = calculateStatus(event);
+                if (event.status !== newStatus) {
+                    event.status = newStatus;
+                    await updateEvent(event);
+                }
+            }
+            await loadAndRenderEvents();
+        }
+
+        // 30분마다 자동 갱신
+        setInterval(() => {
+            updateAllStatuses();
+        }, 30 * 60 * 1000);
+
+        // 이벤트 로드 및 렌더링
+        async function loadAndRenderEvents() {
+            allEvents = await getAllEvents();
+            
+            // 상태 업데이트
+            allEvents = allEvents.map(event => ({
+                ...event,
+                status: calculateStatus(event)
+            }));
+
+            applyFiltersAndSort();
+            updateFilterOptions();
+        }
+
+        // 필터 및 정렬 적용
+        function applyFiltersAndSort() {
+            let filtered = [...allEvents];
+
+            // 탭 필터
+            if (currentTab !== 'all') {
+                filtered = filtered.filter(e => e.status === currentTab);
+            }
+
+            // 검색
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(e =>
+                    e.channelName.toLowerCase().includes(searchTerm) ||
+                    e.eventTitle.toLowerCase().includes(searchTerm) ||
+                    (e.prize && e.prize.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            // 채널 필터
+            const channelFilter = document.getElementById('channelFilter').value;
+            if (channelFilter) {
+                filtered = filtered.filter(e => e.channelName === channelFilter);
+            }
+
+            // 월 필터
+            const monthFilter = document.getElementById('monthFilter').value;
+            if (monthFilter) {
+                filtered = filtered.filter(e => e.applyDate.startsWith(monthFilter));
+            }
+
+            // 플랫폼 필터
+            const platformFilter = document.getElementById('platformFilter').value;
+            if (platformFilter) {
+                filtered = filtered.filter(e => e.platform === platformFilter);
+            }
+
+            // 정렬
+            const sortBy = document.getElementById('sortBy').value;
+            const [field, order] = sortBy.split('-');
+            filtered.sort((a, b) => {
+                let valA = a[field] || '';
+                let valB = b[field] || '';
+                if (order === 'asc') {
+                    return valA > valB ? 1 : -1;
+                } else {
+                    return valA < valB ? 1 : -1;
+                }
+            });
+
+            displayedEvents = filtered;
+            displayCount = 20;
+            renderEvents();
+        }
+
+        // 이벤트 렌더링 (무한 스크롤)
+        function renderEvents() {
+            const container = document.getElementById('cardsContainer');
+            const toDisplay = displayedEvents.slice(0, displayCount);
+
+            if (toDisplay.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-icons">event_busy</span>
+                        <p>등록된 이벤트가 없습니다</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = toDisplay.map(event => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${event.eventTitle}</div>
+                            <div class="card-channel">${event.channelName}</div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="icon-btn" onclick="editEvent(${event.id})">
+                                <span class="material-icons">edit</span>
+                            </button>
+                            <button class="icon-btn" onclick="confirmDelete(${event.id})">
+                                <span class="material-icons">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <div>
+                            <span class="material-icons" style="font-size: 18px;">calendar_today</span>
+                            신청: ${event.applyDate}
+                        </div>
+                        <div>
+                            <span class="material-icons" style="font-size: 18px;">event</span>
+                            발표: ${event.announceDate}
+                        </div>
+                        ${event.prize ? `
+                        <div>
+                            <span class="material-icons" style="font-size: 18px;">card_giftcard</span>
+                            ${event.prize}
+                        </div>` : ''}
+                        ${event.platform ? `
+                        <div>
+                            <span class="material-icons" style="font-size: 18px;">public</span>
+                            ${event.platform}
+                        </div>` : ''}
+                        ${event.eventLink ? `
+                        <div>
+                            <a href="${event.eventLink}" target="_blank" class="link-btn">
+                                <span class="material-icons" style="font-size: 18px;">link</span>
+                                이벤트 링크
+                            </a>
+                        </div>` : ''}
+                    </div>
+                    <span class="chip ${event.status}">
+                        ${event.status === 'progress' ? '진행중' : event.status === 'ended' ? '종료' : '당첨'}
+                    </span>
+                </div>
+            `).join('');
+
+            // Intersection Observer 설정
+            if (displayedEvents.length > displayCount) {
+                setupIntersectionObserver();
+            }
+        }
+
+        // Intersection Observer 설정
+        function setupIntersectionObserver() {
+            if (observer) observer.disconnect();
+
+            const cards = document.querySelectorAll('.card');
+            const lastCard = cards[cards.length - 1];
+
+            if (!lastCard) return;
+
+            observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && displayCount < displayedEvents.length) {
+                        displayCount += 20;
+                        renderEvents();
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            observer.observe(lastCard);
+        }
+
+        // 필터 옵션 업데이트
+        function updateFilterOptions() {
+            // 채널 목록
+            const channels = [...new Set(allEvents.map(e => e.channelName))].sort();
+            const channelFilter = document.getElementById('channelFilter');
+            channelFilter.innerHTML = '<option value="">전체 채널</option>' + 
+                channels.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            // 월 목록
+            const months = [...new Set(allEvents.map(e => e.applyDate.substring(0, 7)))].sort().reverse();
+            const monthFilter = document.getElementById('monthFilter');
+            monthFilter.innerHTML = '<option value="">전체 월</option>' + 
+                months.map(m => `<option value="${m}">${m}</option>`).join('');
+
+            // 플랫폼 목록
+            const platforms = [...new Set(allEvents.map(e => e.platform).filter(p => p))].sort();
+            const platformFilter = document.getElementById('platformFilter');
+            platformFilter.innerHTML = '<option value="">전체 플랫폼</option>' + 
+                platforms.map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+
+        // 모달 열기/닫기
+        function openModal() {
+            document.getElementById('eventModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('eventModal').classList.remove('active');
+            document.getElementById('eventForm').reset();
+            editingId = null;
+            document.getElementById('modalTitle').textContent = '이벤트 추가';
+        }
+
+        // 이벤트 추가/수정
+        document.getElementById('eventForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const event = {
+                id: editingId || Date.now(),
+                channelName: document.getElementById('channelName').value,
+                eventTitle: document.getElementById('eventTitle').value,
+                applyDate: document.getElementById('applyDate').value,
+                announceDate: document.getElementById('announceDate').value,
+                prize: document.getElementById('prize').value,
+                platform: document.getElementById('platform').value,
+                eventLink: document.getElementById('eventLink').value,
+                isWinner: document.getElementById('isWinner').checked,
+                status: ''
+            };
+
+            event.status = calculateStatus(event);
+
+            if (editingId) {
+                await updateEvent(event);
+            } else {
+                await addEvent(event);
+            }
+
+            closeModal();
+            await loadAndRenderEvents();
+        });
+
+        // 이벤트 수정
+        async function editEvent(id) {
+            editingId = id;
+            const events = await getAllEvents();
+            const event = events.find(e => e.id === id);
+
+            document.getElementById('channelName').value = event.channelName;
+            document.getElementById('eventTitle').value = event.eventTitle;
+            document.getElementById('applyDate').value = event.applyDate;
+            document.getElementById('announceDate').value = event.announceDate;
+            document.getElementById('prize').value = event.prize || '';
+            document.getElementById('platform').value = event.platform || '';
+            document.getElementById('eventLink').value = event.eventLink || '';
+            document.getElementById('isWinner').checked = event.isWinner;
+
+            document.getElementById('modalTitle').textContent = '이벤트 수정';
+            openModal();
+        }
+
+        // 이벤트 삭제
+        async function confirmDelete(id) {
+            if (confirm('정말 삭제하시겠습니까?')) {
+                await deleteEvent(id);
+                await loadAndRenderEvents();
+            }
+        }
+
+        // 탭 전환
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTab = tab.dataset.tab;
+                applyFiltersAndSort();
+            });
+        });
+
+        // 검색 및 필터 이벤트
+        document.getElementById('searchInput').addEventListener('input', applyFiltersAndSort);
+        document.getElementById('channelFilter').addEventListener('change', applyFiltersAndSort);
+        document.getElementById('monthFilter').addEventListener('change', applyFiltersAndSort);
+        document.getElementById('platformFilter').addEventListener('change', applyFiltersAndSort);
+        document.getElementById('sortBy').addEventListener('change', applyFiltersAndSort);
+
+        // FAB 클릭
+        document.getElementById('addBtn').addEventListener('click', openModal);
+
+        // 모달 외부 클릭 시 닫기
+        document.getElementById('eventModal').addEventListener('click', (e) => {
+            if (e.target.id === 'eventModal') {
+                closeModal();
+            }
+        });
+
+        // 초기화
+        (async () => {
+            await initDB();
+            await loadAndRenderEvents();
+        })();
+    </script>
+</body>
+</html>
